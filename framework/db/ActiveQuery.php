@@ -767,6 +767,36 @@ class ActiveQuery extends Query implements ActiveQueryInterface
     }
 
     /**
+     * Define an alias for the table defined in [[modelClass]].
+     *
+     * This method will adjust [[from]] so that an already defined alias will be overwritten.
+     * If none was defined, [[from]] will be populated with the given alias.
+     *
+     * @param string $alias the table alias.
+     * @return $this the query object itself
+     */
+    public function alias($alias)
+    {
+        if (empty($this->from) || count($this->from) < 2) {
+            list($tableName, ) = $this->getQueryTableName($this);
+            $this->from = [$alias => $tableName];
+        } else {
+            /* @var $modelClass ActiveRecord */
+            $modelClass = $this->modelClass;
+            $tableName = $modelClass::tableName();
+
+            foreach($this->from as $key => $table) {
+                if ($table === $tableName) {
+                    unset($this->from[$key]);
+                    $this->from[$alias] = $tableName;
+                }
+            }
+        }
+        $this->populateAliases($this->from);
+        return $this;
+    }
+
+    /**
      * @var array array of aliases explicitly defined in joinWith(). Array keys are
      * the relation names, values are the table aliases.
      */
